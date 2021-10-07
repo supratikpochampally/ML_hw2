@@ -1,0 +1,228 @@
+---
+title: "Homework 2: Linear Regression"
+author: "Supratik Pochampally"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Problem 1: Simple Linear Regression
+
+### 1.
+
+```{r}
+# Load library ISLR 
+library("ISLR")
+# Load Auto data
+data(Auto)
+# Learn more about the Auto data set 
+names(Auto)
+summary(Auto)
+# Randomly divide data into train and test sets
+set.seed(1234)
+i <- sample(1:nrow(Auto), nrow(Auto)*0.75, replace=FALSE)
+train <- Auto[i, ]
+test <- Auto[-i, ]
+```
+
+### 2.
+
+```{r}
+# Simple linear regression on train data
+lm1 <- lm(mpg~horsepower, data=train)
+lm1
+# Summary of the linear model
+summary(lm1)
+# Calculate MSE
+mean((summary(lm1)$residuals)^2)
+```
+
+### 3.
+
+Answer these based on the model summary: 
+
+(a) mpg = 39.648595 + ((-0.156681) * horsepower)
+(b) The p-value of the variables is very close to 0 and The F-statistic is much higher than 1, which suggest that there is a strong relationship between horsepower and mpg. However, the R^2 value is relatively low, and we will need more evidence to conclusively state that there is a strong relationship. 
+(c) The correlation between mpg and horsepower is negative.
+(d) The RSE value shows that our model is only 4.853 mpg off of our data, which is relatively low when considering that the median mpg is 22.75. The R^2 value is 0.6136, which is not particularly strong and means that the variance is not very high. Lastly, the F-statistic is higher than 1 with it's associated p-value very close to zero, showing that our data is statistically significant. 
+(e) The MSE is 23.39176, meaning that the average squared difference between the data and model is 23.39176 mpg. This is not particularly bad for our model, but can likely be improved upon.
+
+### 4. 
+
+The predicted mpg for horsepower of 98 is 24.29381 mpg. This is a reasonable prediction given the plot of the training data for mpg vs. horsepower and the regression line of mpg = 39.6486 + ((-0.1567) * horsepower), as plugging in the value 98 as the horsepower in the equation results in the predicted mpg value of 24.29381.
+
+```{r}
+# Plot training data of mpg vs. horsepower
+plot(train$horsepower, train$mpg, main="Scatterplot of Training data mpg vs. Training data horsepower", xlab="Training data horsepower", ylab="Training data mpg")
+# Draw blue line of linear model
+abline(lm1, col="blue")
+# Predict mpg for horsepower 98
+predict(lm1, data.frame(horsepower = 98))
+```
+
+### 5. 
+
+The correlation between the predicted values and the test data mpg values is 0.7642101. This number represents a strong positive correlation between the predicted values and test data mpg.
+
+The MSE of the test data is 25.71727. This is greater than the MSE for the training data, which was 23.39176. This means that there is a larger average error in the test data than the train data. 
+
+```{r}
+# Test on the test data
+pred <- predict(lm1, newdata=test)
+# Find the correlation between the predicted values and test data 
+cor <- cor(pred, test$mpg)
+cor
+# Calculate the MSE on the test results
+mse <- mean((pred - test$mpg)^2)
+mse
+```
+
+### 6. 
+
+The Residuals vs. Fitted plot do not depict a horizontal line, and instead is curved in a bowl-shape, which is evidence of non-linearity from the residuals. 
+
+```{r}
+# Create a 2x2 grid for grid for the plots
+par(mfrow=c(2, 2 ))
+# Plot the residual plots of lm1
+plot(lm1)
+```
+
+### 7. 
+
+The R^2 value of the initial linear model is 0.6135953 and the R^2 value of the second linear model with log(mpg) is 0.6974977 This means that or second linear model with log(mpg) better fits our data. 
+
+```{r}
+# Second linear model with log(mpg)
+lm2 <- lm(log(mpg)~horsepower, data=train)
+# R^2 of initial linear model
+summary(lm1)$r.squared
+# R^2 of second linear model with log(mpg)
+summary(lm2)$r.squared
+```
+
+### 8.
+
+The second linear model with log(mpg) fits the data better than the initial linear model, likely because the log function damps down the x values closer to the axes and squishes the data closer to the regression line, thus increasing R^2 and resulting in a better model for our data. 
+
+```{r}
+# Plot data of mpg vs. horsepower
+plot(Auto$horsepower, log(Auto$mpg), main="Scatterplot of mpg vs. horsepower", xlab="horsepower", ylab="mpg")
+# Draw blue line of the second linear model
+abline(lm2, col="blue")
+```
+
+### 9. 
+
+The correlation for the first linear model is 0.7642101 and the correlation for the second linear model is 0.8161675 When comparing the two, we see that the second linear model has a stronger positive correlation than the first linear model.
+
+The MSE of the first linear model is 25.71727 and the MSE for the second linear model is 22.49848 When comparing the two, we see that the second linear model has a smaller average distance between the data and the model. 
+
+```{r}
+# Predict on test data using second linear model
+pred2 <- exp(predict(lm2, newdata=test))
+# Correlation for first linear model
+cor
+# Correlation for second linear model
+cor2 <- cor(pred2, test$mpg)
+cor2
+# MSE for first linear model
+mse
+# MSE for second linear model
+mse2 <- mean((pred2 - test$mpg)^2)
+mse2
+```
+
+### 10.
+
+```{r}
+# Create a 2x2 grid for grid for the plots
+par(mfrow=c(2, 2 ))
+# Plot the residual plots of lm2
+plot(lm2)
+```
+
+## Problem 2: Multiple Linear Regression
+
+### 1.
+
+Positive correlations:
+
+* weight vs. displacement
+* horsepower vs. weight
+* displacement vs. horsepower
+
+Negative correlations:
+
+* mpg vs. weight 
+* displacement vs. mpg
+* horsepower vs. mpg
+
+```{r}
+# Display scatterplot matrix of all the variables in the data set
+pairs(Auto)
+```
+
+### 2.
+
+2 strongest positive correlations:
+
+* displacement vs. cylinders = 0.9508233
+* displacement vs. weight = 0.9329944
+
+2 strongest negative correlations:
+
+* weight vs. mpg = -0.8322442
+* displacement vs. mpg = -0.8051269
+
+```{r}
+# Display the matrix of correlations between all variables excluding name
+cor(Auto[1:8])
+```
+
+### 3.
+
+The predictors that appear to have a statistically significant relationship to mpg (the response) are weight, year, and origin. 
+
+```{r}
+# Make the origin variable a factor
+Auto$origin <- factor(Auto$origin)
+# Multiple linear regression of all variables excluding name
+lm3 <- lm(mpg~.-name, data = Auto)
+# Summary of model
+summary(lm3)
+```
+
+### 4.
+
+The Residuals vs. Fitted plot do not depict a horizontal line, and instead is curved in a bowl-shape, which is evidence of some problems with the fit. 
+
+Observation 14 seems to be a leverage point, as it has an unusual x-value as seen in the Residuals vs. Leverage plot.
+
+
+```{r}
+# Create a 2x2 grid for grid for the plots
+par(mfrow=c(2, 2 ))
+# Plot the residual plots of lm3
+plot(lm3)
+# Print observation 14
+Auto[14, ]
+```
+
+### 5.
+
+The R^2 value of the initial multiple regression model using all variables (except name) as predictors was 0.8242. The R^2 value of the second multiple regression model using all variables (except name) as predictors as well as weight and cylinders as interaction effects is 0.8556. This increase in the R^2 value shows that the second model outperformed the first one. 
+
+Furthermore, using the anova() function to compare the two models, we see that the original model has an RSS value of 4187.392 while the second model has an RSS value of 3497.914 (and a p-value very close to 0), once again showing that the second model outperformed the first one. 
+
+```{r}
+# Multiple regression model of every variable and the interaction effect between weight and cylinders
+lm4 <- lm(mpg~.-name+weight*cylinders, data = Auto)
+# Summary of model
+summary(lm4)
+# Call anova() function to compare the initial and second linear models
+anova(lm3, lm4)
+```
+
+
+
